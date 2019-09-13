@@ -35,8 +35,8 @@ while True:
     if k == 27:
         break
     elif k == ord('s'):
-        cv2.imwrite('opticalfb.png', frame2)
-        cv2.imwrite('opticalhsv.png', rgb)
+        cv2.imwrite(directory + 'opticalfb.png', frame2)
+        cv2.imwrite(directory + 'opticalhsv.png', rgb)
     prvs = next
 
 capture.release()
