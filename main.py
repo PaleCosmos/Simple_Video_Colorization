@@ -1,63 +1,58 @@
-import cv2
 import numpy as np
+import cv2
 
-# 동영상의 디렉토리
 directory = 'resources/sample/'
 
-# 동영상 객체
-capture = cv2.VideoCapture(directory + 'sample.mp4')
+cap = cv2.VideoCapture(directory + 'sample.mp4')
 
-# 20000ms 이후를 보여줌
-# capture.set(cv2.CAP_PROP_POS_MSEC, 20000)
-# success, image = capture.read()
+output_size = (187, 333)
 
-ret, frame1 = capture.read()
+fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+out = cv2.VideoWriter(directory + 'output.mp4', fourcc, cap.get(cv2.CAP_PROP_FPS), output_size)
 
-prvs = cv2.cvtColor(frame1, cv2.COLOR_RGB2GRAY)
+if not cap.isOpened():
+    exit()
 
-hsv = np.zeros_like(frame1)
+tracker = cv2.TrackerCSRT_create()
 
-hsv[..., 1] = 255
+ret, img = cap.read()
+
+cv2.namedWindow('Select Window')
+cv2.imshow('Select Window', img)
+
+# setting ROI
+rect = cv2.selectROI('Select Window', img, fromCenter=False, showCrosshair=True)
+cv2.destroyWindow('Select Window')
+
+# initialize tracker
+tracker.init(img, rect)
 
 while True:
-    ret, frame2 = capture.read()
-    next = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+    ret, img = cap.read()
 
-    flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+    if not ret:
+        exit()
 
-    mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-    hsv[..., 0] = ang * 180 / np.pi / 2
-    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
-    rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    success, box = tracker.update(img)
 
-    cv2.imshow('frame2', rgb)
-    k = cv2.waitKey(30) & 0xff
-    if k == 27:
+    left, top, w, h = [int(v) for v in box]
+
+    center_x = left + w / 2
+    center_y = top + h / 2
+
+    result_top = int(center_y - output_size[1] / 2)
+    result_bottom = int(center_y + output_size[1] / 2)
+    result_left = int(center_x - output_size[0] / 2)
+    result_right = int(center_x + output_size[0] / 2)
+
+    result_img = img[result_top:result_bottom, result_left: result_right].copy()
+
+    out.write(result_img)
+
+    cv2.rectangle(img, pt1=(left, top), pt2=(left + w, top + h), color=(255, 255, 255),
+                  thickness=3)
+
+    cv2.imshow('result_img', result_img)
+    cv2.imshow('img', img)
+    if cv2.waitKey(1) == ord('q'):
         break
-    elif k == ord('s'):
-        cv2.imwrite(directory + 'opticalfb.png', frame2)
-        cv2.imwrite(directory + 'opticalhsv.png', rgb)
-    prvs = next
-
-capture.release()
-
-# 스크린샷 저장
-# if success:
-#     cv2.imwrite(directory + 'sample.jpg', image)
-#     cv2.imshow("20sec", image)
-#     cv2.waitKey()
-
-# while capture.isOpened():
-#
-#     ret, frame = capture.read()
-#
-#     if ret:
-#         cv2.imshow("SVC", frame)
-#         if cv2.waitKey(33) > 0:
-#             break
-#     else:
-#         break
-
-
-# capture.release()
-cv2.destroyAllWindows()
