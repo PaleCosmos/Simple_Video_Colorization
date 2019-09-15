@@ -1,9 +1,13 @@
 import numpy as np
 import cv2
+import time
 
 directory = 'resources/sample/'
 
-cap = cv2.VideoCapture(directory + 'sample.mp4')
+cap = cv2.VideoCapture(directory + 'sample1_.mp4')
+
+# 시작 초
+cap.set(cv2.CAP_PROP_POS_MSEC, 133000)
 
 output_size = (187, 333)
 
@@ -27,11 +31,22 @@ cv2.destroyWindow('Select Window')
 # initialize tracker
 tracker.init(img, rect)
 
+prevTime = 0
+
 while True:
     ret, img = cap.read()
 
     if not ret:
         exit()
+
+    curTime = time.time()
+    sec = curTime - prevTime
+
+    prevTime = curTime
+
+    fps = 1 / sec
+
+    _str = "FPS : %0.1f" % fps
 
     success, box = tracker.update(img)
 
@@ -51,6 +66,8 @@ while True:
 
     cv2.rectangle(img, pt1=(left, top), pt2=(left + w, top + h), color=(255, 255, 255),
                   thickness=3)
+
+    cv2.putText(img, _str, (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
 
     # 객체를 추적한 frame show
     cv2.imshow('result_img', result_img)
