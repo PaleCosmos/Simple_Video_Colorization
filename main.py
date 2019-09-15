@@ -52,7 +52,9 @@ while True:
     cv2.rectangle(img, pt1=(left, top), pt2=(left + w, top + h), color=(255, 255, 255),
                   thickness=3)
 
+    # 객체를 추적한 frame show
     cv2.imshow('result_img', result_img)
+    # 전체적인 frame show
     cv2.imshow('img', img)
     if cv2.waitKey(1) == ord('q'):
         break
