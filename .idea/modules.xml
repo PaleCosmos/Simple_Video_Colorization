@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Swift_Video_Coloring.iml" filepath="$PROJECT_DIR$/.idea/Swift_Video_Coloring.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Swift_Video_Coloring.iml" filepath="$PROJECT_DIR$/Swift_Video_Coloring.iml" />
     </modules>
   </component>
 </project>
