@@ -33,45 +33,54 @@ tracker.init(img, rect)
 
 prevTime = 0
 
-while True:
-    ret, img = cap.read()
+flag = True;
 
-    if not ret:
-        exit()
+while flag:
+    try:
+        ret, img = cap.read()
 
-    curTime = time.time()
-    sec = curTime - prevTime
+        if not ret:
+            exit()
 
-    prevTime = curTime
+        curTime = time.time()
+        sec = curTime - prevTime
 
-    fps = 1 / sec
+        prevTime = curTime
 
-    _str = "FPS : %0.1f" % fps
+        fps = 1 / sec
 
-    success, box = tracker.update(img)
+        _str = "FPS : %0.1f" % fps
 
-    left, top, w, h = [int(v) for v in box]
+        success, box = tracker.update(img)
 
-    center_x = left + w / 2
-    center_y = top + h / 2
+        left, top, w, h = [int(v) for v in box]
 
-    result_top = int(center_y - output_size[1] / 2)
-    result_bottom = int(center_y + output_size[1] / 2)
-    result_left = int(center_x - output_size[0] / 2)
-    result_right = int(center_x + output_size[0] / 2)
+        center_x = left + w / 2
+        center_y = top + h / 2
 
-    result_img = img[result_top:result_bottom, result_left: result_right].copy()
+        result_top = int(center_y - output_size[1] / 2)
+        result_bottom = int(center_y + output_size[1] / 2)
+        result_left = int(center_x - output_size[0] / 2)
+        result_right = int(center_x + output_size[0] / 2)
 
-    out.write(result_img)
+        result_img = img[result_top:result_bottom, result_left: result_right].copy()
 
-    cv2.rectangle(img, pt1=(left, top), pt2=(left + w, top + h), color=(255, 255, 255),
-                  thickness=3)
+        out.write(result_img)
 
-    cv2.putText(img, _str, (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
+        cv2.rectangle(img, pt1=(left, top), pt2=(left + w, top + h), color=(255, 255, 255),
+                      thickness=3)
 
-    # 객체를 추적한 frame show
-    cv2.imshow('result_img', result_img)
-    # 전체적인 frame show
-    cv2.imshow('img', img)
-    if cv2.waitKey(1) == ord('q'):
+        cv2.putText(img, _str, (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
+
+        # 객체를 추적한 frame show
+        result_img = cv2.cvtColor(result_img, cv2.COLOR_RGB2GRAY)
+        cv2.imshow('result_img', result_img)
+
+        # 전체적인 frame show
+        cv2.imshow('img', img)
+        if cv2.waitKey(1) == ord('q'):
+            break
+    except Exception as e:
+        print(e.__str__())
+        cv2.destroyAllWindows()
         break
