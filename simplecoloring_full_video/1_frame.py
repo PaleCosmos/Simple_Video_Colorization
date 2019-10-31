@@ -7,28 +7,28 @@ import glob
 directory = ""
 count = 0
 
-# Function to extract frames 
-def FrameCapture(path): 
+
+# Function to extract frames
+def FrameCapture(path):
     global directory, count
     # Path to video file 
-    vidObj = cv2.VideoCapture(path) 
-  
+    vidObj = cv2.VideoCapture(path)
+
     # checks whether frames were extracted 
     success = 1
-  
-    while success: 
-  
+
+    while success:
         # vidObj object calls read 
         # function extract frames 
-        success, image = vidObj.read() 
-  
+        success, image = vidObj.read()
+
         # Saves the frames with frame-count 
-        cv2.imwrite(directory + "frame/frame%d.jpg" % count, image) 
-  
+        cv2.imwrite(directory + "frame/frame%d.jpg" % count, image)
+
         count += 1
 
-# Driver Code 
-if __name__ == '__main__': 
-  
+
+# Driver Code
+if __name__ == '__main__':
     # Calling the function
     FrameCapture('output.mp4')
