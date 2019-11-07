@@ -11,10 +11,8 @@ roi_hist = None
 roi = None
 
 boundaries = [
-    ([200, 200, 200], [255, 255, 255]),
-    ([86, 31, 4], [220, 88, 50]),
-    ([25, 146, 190], [62, 174, 250]),
-    ([103, 86, 65], [145, 133, 128])
+    ([0, 0, 25], [100, 100, 255]),
+
 ]
 
 
@@ -50,7 +48,7 @@ def camShift():
     global frame, frame2, inputMode, trackWindow, roi_hist, roi, boundaries
 
     try:
-        cap = cv2.VideoCapture('../resources/sample/sample.mp4')
+        cap = cv2.VideoCapture('sampleVideo.mp4')
         cap.set(3, 480)
         cap.set(4, 320)
     except:
@@ -76,7 +74,7 @@ def camShift():
         h, w = frame.shape[:2]
 
         blank_image = np.zeros((h, w, 3), np.uint8)
-        blank_image[:] = (0, 0, 232)
+        blank_image[:] = (255, 0, 0)
 
         blank_image2 = np.zeros((h, w, 3), np.uint8)
         blank_image2[:] = (255, 255, 255)
