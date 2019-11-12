@@ -9,6 +9,8 @@ const Menu = () => {
   const onHandleChange = (idx) => {
     setMenuInx(idx)
   }
+
+  let key =0;
   
   const memuItems = () => {
     const arr = [
@@ -20,7 +22,7 @@ const Menu = () => {
     return arr.map((obj,idx) => {
       const active = (idx === menuIdx?true:false)
       return (
-        <Text color="white" size={active?'lg':'md'} bold={active}>
+        <Text key ={key++}color="white" size={active?'lg':'md'} bold={active}>
           <Link href={obj.link} onClick={() => onHandleChange(idx)}>
             <Box padding={3}>{obj.name}</Box>
           </Link>
