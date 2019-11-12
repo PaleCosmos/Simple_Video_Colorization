@@ -15,7 +15,7 @@ h = None
 w = None
 
 boundaries = [
-    ([0, 0, 50], [50, 50, 255])
+    ([0, 0, 50], [100, 100, 255])
 ]
 
 
@@ -55,7 +55,6 @@ def camShift():
     # grab references to the global variables
     global frame, frame2, inputMode, trackWindow, roi_hist, roi, boundaries, blank_image3, s, h, w
 
-    
     try:
         # read video
         cap = cv2.VideoCapture('sampleVideo.mp4')
@@ -68,7 +67,7 @@ def camShift():
 
     # read decode frame
     ret, frame = cap.read()
-    
+
     # set window name 'frame' 
     cv2.namedWindow('frame')
     # check mouse event, and callback
@@ -97,7 +96,13 @@ def camShift():
         # set white image
         blank_image2 = np.zeros((h, w, 3), np.uint8)
         blank_image2[:] = (255, 255, 255)
-        
+
+        V_Equals = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # print(V_Equals.shape)
+        blank_image[:, :, 1] = V_Equals[:, :, 1]
+        blank_image[:, :, 2] = V_Equals[:, :, 2]
+        # print(blank_image.shape)
+
         # set the color range
         mask = cv2.inRange(frame, lower, upper)  # 색부분
         # in mask == mask, frame or bloack_image2 (set white)
@@ -117,13 +122,13 @@ def camShift():
         else:
             # in mask == mask, frame or bloack_image (set color(blue))
             trim2 = cv2.bitwise_and(trim1, blank_image)  # 몸통이파랑
-            #cv2.imshow("btrim2", trim2)
+            # cv2.imshow("btrim2", trim2)
             # frame and trim; background image(not object)
             trim3 = cv2.bitwise_and(frame, trim1)
-            #cv2.imshow("btrim3", trim3)
+            # cv2.imshow("btrim3", trim3)
             # trim3 xor frame; 
             trim4 = cv2.bitwise_xor(trim3, frame)
-            #cv2.imshow("btrim4", trim4)
+            # cv2.imshow("btrim4", trim4)
         frameNot = cv2.bitwise_and(frame, trim2)
 
         frame = cv2.bitwise_or(trim4, trim2)
@@ -138,7 +143,7 @@ def camShift():
             pts = np.int0(pts)
             # roi is white, other is black
             blank_image3[:] = (0, 0, 0)
-            blank_image3[np.min(pts[:,1]):np.max(pts[:,1]), np.min(pts[:,0]):np.max(pts[:,0])] = (255, 255, 255)
+            blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
             cv2.imshow("box", blank_image3)
             cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
 
@@ -159,6 +164,7 @@ def camShift():
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 # main
 if __name__ == '__main__':
