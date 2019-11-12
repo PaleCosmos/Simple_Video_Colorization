@@ -23,7 +23,7 @@ export default class App extends Component{
               <Header/>
               <Menu/>
             </Box>
-          <Box padding={5}>
+          <Box padding={5} >
             <Button onClick={()=>alert('aaa')}>
               이것은 버튼이다
             </Button>
