@@ -9,9 +9,10 @@ rectangle = False
 trackWindow = None
 roi_hist = None
 roi = None
+s = False
 
 boundaries = [
-    ([0, 0, 50], [50, 50, 255])
+    ([0, 0, 50], [80, 80, 255])
 ]
 
 
@@ -40,6 +41,7 @@ def onMouse(event, x, y, flags, param):
             roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             roi_hist = cv2.calcHist([roi], [0], None, [180], [0, 180])
             cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
+            s = True
     return
 
 
@@ -73,7 +75,7 @@ def camShift():
         h, w = frame.shape[:2]
 
         blank_image = np.zeros((h, w, 3), np.uint8)
-        blank_image[:] = (255, 0, 0)
+        blank_image[:] = (0, 255, 0)
 
         blank_image2 = np.zeros((h, w, 3), np.uint8)
         blank_image2[:] = (255, 255, 255)
@@ -86,13 +88,22 @@ def camShift():
 
         trim2 = cv2.bitwise_and(trim, blank_image, mask=mask)  # 몸통이파랑
 
+        trim2_ = cv2.cvtColor(trim2, cv2.COLOR_BGR2HSV)
+
+        trim2_[:, :, 1] = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)[:, :, 1]
+        trim2_[:, :, 2] = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)[:, :, 2]
+
+        trim2 = cv2.cvtColor(trim2_, cv2.COLOR_HSV2BGR)
+
         trim3 = cv2.bitwise_and(frame, trim)
 
         trim4 = cv2.bitwise_xor(trim3, frame)
 
         frameNot = cv2.bitwise_and(frame, trim2)
 
-        frame = cv2.bitwise_or(trim4, trim2)
+        frame_ = cv2.bitwise_or(trim4, trim2, mask=mask)
+
+        frame = cv2.bitwise_or(frame_, frame)
 
         # frame = cv2.bitwise_xor(frame, trim2)
 
@@ -107,6 +118,8 @@ def camShift():
             cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
 
         cv2.imshow('frame', frame)
+        cv2.imshow('trim2', trim2_)
+        cv2.imshow('trim4', trim4)
 
         k = cv2.waitKey(100) & 0xFF
         if k == 27:

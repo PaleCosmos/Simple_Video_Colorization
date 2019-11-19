@@ -15,7 +15,7 @@ h = None
 w = None
 
 boundaries = [
-    ([0, 0, 50], [100, 100, 255])
+    ([0, 0, 80], [80, 80, 255])
 ]
 
 
@@ -31,13 +31,13 @@ def onMouse(event, x, y, flags, param):
         elif event == cv2.EVENT_MOUSEMOVE:
             if rectangle:
                 frame = frame2.copy()
-                cv2.rectangle(frame, (col, row), (x, y), (0, 255, 0), 2)
+                cv2.rectangle(frame, (col, row), (x, y), (255, 255, 255), 2)
                 cv2.imshow('frame', frame)
 
         elif event == cv2.EVENT_LBUTTONUP:
             inputMode = False
             rectangle = False
-            cv2.rectangle(frame, (col, row), (x, y), (0, 255, 0), 2)
+            cv2.rectangle(frame, (col, row), (x, y), (255, 255, 255), 2)
             height, width = abs(row - y), abs(col - x)
             trackWindow = (col, row, width, height)
             roi = frame[row:row + height, col:col + width]
@@ -92,15 +92,20 @@ def camShift():
 
         # set blue image
         blank_image = np.zeros((h, w, 3), np.uint8)
-        blank_image[:] = (255, 0, 0)
+        blank_image[:] = (255, 255, 255)
+
+        blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2HSV)
         # set white image
         blank_image2 = np.zeros((h, w, 3), np.uint8)
         blank_image2[:] = (255, 255, 255)
 
         V_Equals = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # print(V_Equals.shape)
-        blank_image[:, :, 1] = V_Equals[:, :, 1]
-        blank_image[:, :, 2] = V_Equals[:, :, 2]
+
+        ppap = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        blank_image[:, :, 1] = ppap[:, :, 1]
+        blank_image[:, :, 2] = ppap[:, :, 2]
+        blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2BGR)
         # print(blank_image.shape)
 
         # set the color range
@@ -116,6 +121,7 @@ def camShift():
             # trim3 xor frame; 
             trim4 = cv2.bitwise_xor(trim3, frame)
         else:
+            #trim = cv2.bitwise_and(blank_image3, trim1)
             # in mask == mask, frame or bloack_image (set color(blue))
             trim2 = cv2.bitwise_and(trim1, blank_image)  # 몸통이파랑
             # cv2.imshow("btrim2", trim2)
@@ -125,9 +131,9 @@ def camShift():
             # trim3 xor frame; 
             trim4 = cv2.bitwise_xor(trim3, frame)
             # cv2.imshow("btrim4", trim4)
-        frameNot = cv2.bitwise_and(frame, trim2)
+        frameNot = cv2.bitwise_and(frame, cv2.cvtColor(trim2, cv2.COLOR_HSV2BGR))
 
-        frame = cv2.bitwise_or(trim4, trim2)
+        frame = cv2.bitwise_or(trim4, blank_image)
 
         # frame = cv2.bitwise_xor(frame, trim2)
 
@@ -144,7 +150,11 @@ def camShift():
             cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
 
         cv2.imshow('frame', frame)
-
+        # cv2.imshow('frameN', frameNot)
+        # cv2.imshow('trim4', trim4)
+        # cv2.imshow('trim', trim1)
+        cv2.imshow('b', trim4)
+        cv2.imshow('blank', blank_image)
         k = cv2.waitKey(100) & 0xFF
         if k == 27:
             break
