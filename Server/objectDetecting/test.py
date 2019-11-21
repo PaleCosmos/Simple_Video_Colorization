@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import math
 
 col, width, row, height = -1, -1, -1, -1
 frame = None
@@ -17,6 +18,14 @@ w = None
 boundaries = [
     ([0, 0, 80], [80, 80, 255])
 ]
+
+
+def calculate(a, b, c, x, y):
+    return abs(a * x + b * y + c) / math.sqrt(a ** 2 + b ** 2)
+
+
+def distance(a, b, c, d):
+    return math.sqrt((a - c) ** 2 + (b - d) ** 2)
 
 
 def onMouse(event, x, y, flags, param):
@@ -102,7 +111,7 @@ def camShift():
         V_Equals = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # print(V_Equals.shape)
 
-        ppap = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        ppap = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
         blank_image[:, :, 1] = ppap[:, :, 1]
         blank_image[:, :, 2] = ppap[:, :, 2]
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2BGR)
@@ -117,11 +126,11 @@ def camShift():
             # in mask == mask, frame or bloack_image (set color(blue))
             trim2 = cv2.bitwise_and(trim, blank_image)  # 몸통이파랑 
             # frame and trim; background image(not object)
-            trim3 = cv2.bitwise_and(frame, trim)
-            # trim3 xor frame; 
+            trim3 = cv2.bitwise_and(frame, trim)  # 3ㅇㅔ서 trim
+            # trim3 xor frame;
             trim4 = cv2.bitwise_xor(trim3, frame)
         else:
-            #trim = cv2.bitwise_and(blank_image3, trim1)
+            # trim = cv2.bitwise_and(blank_image3, trim1)
             # in mask == mask, frame or bloack_image (set color(blue))
             trim2 = cv2.bitwise_and(trim1, blank_image)  # 몸통이파랑
             # cv2.imshow("btrim2", trim2)
@@ -145,16 +154,56 @@ def camShift():
             pts = np.int0(pts)
             # roi is white, other is black
             blank_image3[:] = (0, 0, 0)
-            blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
+            # blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
+            # print(pts[:])
+
+            # print(pts[:, :])
+
+            dist1 = distance(pts[0][0], pts[0][1], pts[1][0], pts[1][1])
+            dist2 = distance(pts[0][0], pts[0][1], pts[2][0], pts[2][1])
+            dist3 = distance(pts[0][0], pts[0][1], pts[3][0], pts[3][1])
+
+            sumDist = dist1 + dist2 + dist3 - np.max([dist1, dist2, dist3])
+
+            print(sumDist)
+
+            dots = []
+
+            maxSizeX = np.max(pts[:, 0]) - np.min(pts[:, 0])
+            maxSizeY = np.max(pts[:, 1]) - np.min(pts[:, 1])
+
+            for i, d1 in enumerate(pts):
+                print('i is ', str(i), 'and pts is ', str(d1))
+                for j, d2 in enumerate(pts):
+                    if i < j and not (abs(d1[0] - d2[0]) == maxSizeX or abs(d1[1] - d2[1]) == maxSizeY):
+                        dots.append((
+                            d2[1] - d1[1],
+                            d1[0] - d2[0],
+                            (d1[1] * (d2[0] - d1[0]) - d1[0] * (d2[0] - d1[0]))
+                        ))
+
+            # dots = sorted(dots, key=lambda key: (-1 * key[0] / key[1]))
+            print(dots)
+
+            for dot in blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])]:
+                mLen = 0.0
+                for v in dots:
+                    mLen += calculate(v[0], v[1], v[2], dot[0], dot[1])[0]
+                if mLen <= sumDist:
+                    blank_image3[dot[0], dot[1]] = (255, 255, 255)
+
+            cv2.polylines(blank_image3, [pts], True, (0, 255, 0), 2)
             cv2.imshow("box", blank_image3)
-            cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
+
+            # print(abc)
 
         cv2.imshow('frame', frame)
         # cv2.imshow('frameN', frameNot)
         # cv2.imshow('trim4', trim4)
         # cv2.imshow('trim', trim1)
-        cv2.imshow('b', trim4)
-        cv2.imshow('blank', blank_image)
+        # cv2.imshow('b', trim4)
+        # cv2.imshow('blank', blank_image)
+
         k = cv2.waitKey(100) & 0xFF
         if k == 27:
             break

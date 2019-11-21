@@ -117,6 +117,12 @@ def camShift():
 
             cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
 
+            blank_image3[:] = (0, 0, 0)
+            # blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
+
+            for dot in pts[:]:
+                blank_image3[dot[1], dot[0]] = (255, 255, 255)
+
         cv2.imshow('frame', frame)
         cv2.imshow('trim2', trim2_)
         cv2.imshow('trim4', trim4)
