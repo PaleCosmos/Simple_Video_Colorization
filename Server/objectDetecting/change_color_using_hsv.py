@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import math
+import colorsys
 
 col, width, row, height = -1, -1, -1, -1
 frame = None
@@ -10,15 +10,17 @@ rectangle = False
 trackWindow = None
 roi_hist = None
 roi = None
-blank_image3 = None
+blank_image = None
 s = False
 h = None
 w = None
 
-boundaries = [
-    ([0, 0, 80], [80, 80, 255])
+hsv_boundaries_0 = [
+    ([0, 70, 50], [10, 255, 255])
 ]
-
+hsv_boundaries_1 = [
+    ([170, 70, 50], [180, 255, 255])
+]
 
 def calculate(a, b, c, x, y):
     return abs(a * x + b * y + c) / math.sqrt(a ** 2 + b ** 2)
@@ -29,7 +31,7 @@ def distance(a, b, c, d):
 
 
 def onMouse(event, x, y, flags, param):
-    global col, width, row, height, frame, frame2, inputMode, blank_image3, s, h, w
+    global col, width, row, height, frame, frame2, inputMode, blank_image, s, h, w
     global rectangle, roi_hist, trackWindow
 
     if inputMode:
@@ -54,16 +56,16 @@ def onMouse(event, x, y, flags, param):
             roi_hist = cv2.calcHist([roi], [0], None, [180], [0, 180])
             cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
             # selection range is white, other is black
-            blank_image3 = np.zeros((h, w, 3), np.uint8)
-            blank_image3[:] = (0, 0, 0)
-            blank_image3[row:row + height, col:col + width] = (255, 255, 255)
+            blank_image = np.zeros((h, w, 3), np.uint8)
+            blank_image[:] = (0, 0, 0)
+            blank_image[row:row + height, col:col + width] = (255, 255, 255)
             s = True
     return
 
 
 def camShift():
     # grab references to the global variables
-    global frame, frame2, inputMode, trackWindow, roi_hist, roi, boundaries, blank_image3, s, h, w
+    global frame, frame2, inputMode, trackWindow, roi_hist, roi, boundaries, blank_image, s, h, w
 
     try:
         # read video
@@ -87,10 +89,14 @@ def camShift():
     termination = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
 
     # color lower, upper
-    lower, upper = boundaries[0]
-    lower = np.array(lower, dtype="uint8")
-    upper = np.array(upper, dtype="uint8")
-
+    lower0, upper0 = hsv_boundaries_0[0]
+    lower0 = np.array(lower0, dtype="uint8")
+    upper0 = np.array(upper0, dtype="uint8")
+    lower1, upper1 = hsv_boundaries_1[0]
+    lower1 = np.array(lower1, dtype="uint8")
+    upper1 = np.array(upper1, dtype="uint8")
+    
+    
     while True:
         # read decode frame
         ret, frame = cap.read()
@@ -113,17 +119,20 @@ def camShift():
         white_image[:] = (255, 255, 255)
 
         # 선택된 색상 영역을 하얗게 만든다
-        mask_range = cv2.inRange(frame, lower, upper)
-        mask_white = cv2.bitwise_or(frame, white_image, mask=mask_range)
-
+        # hsv 색상으로 색상 선택하기
+        mask_range_0 = cv2.inRange(HSV_frame, lower0, upper0)
+        mask_white_0 = cv2.bitwise_or(HSV_frame, white_image, mask=mask_range_0)
+        mask_range_1 = cv2.inRange(HSV_frame, lower1, upper1)
+        mask_white_1 = cv2.bitwise_or(HSV_frame, white_image, mask=mask_range_1)
+        mask_white = cv2.bitwise_or(mask_white_0, mask_white_1)
         # 선택된 색상 영역과 선택된 영역을 하얗게 만든다
         if s:
-            mask_white = cv2.bitwise_and(blank_image3, mask_white)
+            mask_white = cv2.bitwise_and(blank_image, mask_white)
 
             merge_color = cv2.merge([CC_h, CC_s, F_v])
             merge_color = cv2.bitwise_and(merge_color, mask_white)
-            cv2.imshow('merge_color', merge_color)
-
+            merge_color = cv2.cvtColor(merge_color, cv2.COLOR_HSV2BGR)
+            
             merge_result = cv2.bitwise_or(frame, merge_color)
             cv2.imshow('merge_result', merge_result)
 
@@ -134,8 +143,8 @@ def camShift():
             pts = cv2.boxPoints(ret)
             pts = np.int0(pts)
             # roi is white, other is black
-            blank_image3[:] = (0, 0, 0)
-            blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
+            blank_image[:] = (0, 0, 0)
+            blank_image[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
             
         cv2.imshow('frame', frame)
         
