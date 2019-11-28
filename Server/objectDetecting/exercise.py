@@ -16,19 +16,17 @@ h = None
 w = None
 
 boundaries = [
-    ([0, 0, 60], [70, 70, 255])
+    ([0, 0, 50], [80, 80, 255])
 ]
 
-cvt2Colors = (0,255,0)
+cvt2Colors = (255,0,0)
 
 
 def calculate(a, b, c, x, y):
     return abs(a * x + b * y + c) / math.sqrt(a ** 2 + b ** 2)
 
-
 def distance(a, b, c, d):
     return math.sqrt((a - c) ** 2 + (b - d) ** 2)
-
 
 def onMouse(event, x, y, flags, param):
     global col, width, row, height, frame, frame2, inputMode, blank_image3, s, h, w
@@ -103,6 +101,10 @@ def camShift():
 
         mask = cv2.inRange(frame, lower, upper)  # 색부분
         mask2 = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+
+        #if s:
+            #mask2 = cv2.bitwise_and(blank_image3, mask2)
+
         
         resf = cv2.subtract(frame, mask2)
         #cv2.imshow('resf', resf)
@@ -137,13 +139,13 @@ def camShift():
             # trim3 xor frame;
             trim4 = cv2.bitwise_xor(trim3, frame)
 
-            # 고쳐야되 왜안되지?
+            #resf = cv2.subtract(frame, mask2)
 
-            mask2 = cv2.cvtColor(blank_image3, cv2.COLOR_BGR2GRAY)
-
-            resf = cv2.subtract(frame, mask2)
+            mask3 = cv2.bitwise_and(blank_image3, mask2)
+            resf = cv2.subtract(frame, mask3)
+            mask3 = cv2.cvtColor(mask3, cv2.COLOR_BGR2GRAY)
             
-            frame2 = cv2.bitwise_or(blank_image, resf, mask = mask2)
+            frame2 = cv2.bitwise_or(resf, blank_image, mask = mask3)
             frame2 = cv2.bitwise_or(resf, frame2)
         
             #cv2.imshow('frame2', resf)
@@ -175,13 +177,17 @@ def camShift():
             ret, trackWindow = cv2.CamShift(dst, trackWindow, termination)
             pts = cv2.boxPoints(ret)
             pts = np.int0(pts)
-            # roi is white, other is black
+
             blank_image3[:] = (0, 0, 0)
             blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
+
+            #for dot in pts[:]:
+            #    blank_image3[dot[1], dot[0]] = (255, 255, 255)
+
+            # roi is white, other is black
             # print(pts[:])
 
             # print(pts[:, :])
-
             # dist1 = distance(pts[0][0], pts[0][1], pts[1][0], pts[1][1])
             # dist2 = distance(pts[0][0], pts[0][1], pts[2][0], pts[2][1])
             # dist3 = distance(pts[0][0], pts[0][1], pts[3][0], pts[3][1])
@@ -216,7 +222,7 @@ def camShift():
             #     if mLen <= sumDist:
             #         blank_image3[dot[0], dot[1]] = (255, 255, 255)
 
-            cv2.polylines(frame2, [pts], True, (0, 255, 0), 2)
+            #cv2.polylines(frame2, [pts], True, (0, 255, 0), 2)
             #cv2.imshow("blank", blank_image)
             
             # print(abc)
