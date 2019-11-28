@@ -19,7 +19,7 @@ boundaries = [
     ([0, 0, 50], [80, 80, 255])
 ]
 
-cvt2Colors = (255,0,0)
+cvt2Colors = (255,255,10)
 
 
 def calculate(a, b, c, x, y):
@@ -121,7 +121,7 @@ def camShift():
         # print(V_Equals.shape)
 
         ppap = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
-        blank_image[:, :, 1] = ppap[:, :, 1]
+        #blank_image[:, :, 1] = ppap[:, :, 1]
         blank_image[:, :, 2] = ppap[:, :, 2]
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2BGR)
         # print(blank_image.shape)
