@@ -18,14 +18,16 @@ s = False
 h = None
 w = None
 
-colorDifferenceValue = 60
-colorDifferenceValues = [colorDifferenceValue,colorDifferenceValue,colorDifferenceValue]
+colorDifferenceValue = 255
+colorDifferenceValues = [colorDifferenceValue,
+                         colorDifferenceValue, colorDifferenceValue]
 
 boundaries = [
     ([0, 0, 0], [255, 255, 255])
 ]
 
 cvt2Colors = (255, 0, 0)
+
 
 def calculate(a, b, c, x, y):
     return abs(a * x + b * y + c) / math.sqrt(a ** 2 + b ** 2)
@@ -38,9 +40,10 @@ def distance(a, b, c, d):
 def onMouse(event, x, y, flags, param):
     global col, width, row, height, frame, frame2, inputMode, inputMode2, blank_image3, s, h, w
     global rectangle, roi_hist, trackWindow, colorDifferenceValue, upper, lower
-    if event == cv2.EVENT_LBUTTONUP:
-        print(frame[y,x])
+    #if event == cv2.EVENT_LBUTTONUP:
         
+    if event == event == cv2.EVENT_LBUTTONDOWN:
+        print(trackWindow is not None)
     if inputMode:
         if event == cv2.EVENT_LBUTTONDOWN:
             rectangle = True
@@ -71,21 +74,36 @@ def onMouse(event, x, y, flags, param):
     elif inputMode2:
         if event == cv2.EVENT_LBUTTONUP:
             #print(str(x) +":"+ str(y))
-            gr = frame[y,x]
-            sortedValue = sorted([0,1,2], key = lambda x:gr[x], reverse=False)
+            #krc = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            mgr = frame[y, x].copy()
+
+            print('mgr: ' + str(mgr))
+
+            sortedValue = sorted(
+                [0, 1, 2], key=lambda x: mgr[x], reverse=False)
+
+            colorContectValue = mgr[0] + mgr[1] + mgr[2] #math.sqrt(mgr[0]**2+mgr[1]**2+mgr[2]**2)
+
             print(sortedValue)
             value = colorDifferenceValue/2
-            los =[]
+            los = []
             ups = []
 
             for k in sortedValue:
-                colorDifferenceValues[k] = value
-                value = value*2
+                colorDifferenceValues[k] = mgr[k] *colorDifferenceValue / colorContectValue
+                #value = value*2
 
-            for i in range(0,3):
-                los.append(gr[i] -colorDifferenceValues[i] if gr[i]>colorDifferenceValues[i] else 0)
-                ups.append(gr[i] +colorDifferenceValues[i] if gr[i]<255-colorDifferenceValues[i] else 255)
-           
+            for i in range(0, 3):
+                los.append(mgr[i] - colorDifferenceValues[i]
+                           if mgr[i] > colorDifferenceValues[i] else 0)
+                ups.append(mgr[i] + colorDifferenceValues[i]
+                           if mgr[i] < 255-colorDifferenceValues[i] else 255)
+
+            #
+            # los = minColor
+            # ups = maxColor
+            #
+
             boundaries[0] = (los, ups)
             lower = np.array(los, dtype="uint8")
             upper = np.array(ups, dtype="uint8")
@@ -183,7 +201,7 @@ def camShift():
             frame2 = cv2.bitwise_or(resf, blank_image, mask=mask3)
             frame2 = cv2.bitwise_or(resf, frame2)
             #print(boundaries)
-            cv2.imshow('masks', mask)
+            #cv2.imshow('masks', mask)
 
         else:
             # trim = cv2.bitwise_and(blank_image3, trim1)
@@ -210,6 +228,17 @@ def camShift():
             ret, trackWindow = cv2.CamShift(dst, trackWindow, termination)
             pts = cv2.boxPoints(ret)
             pts = np.int0(pts)
+
+            for (i, asdf) in enumerate(pts):
+                if asdf[0] >=w:
+                    pts[i][0] =w-1
+                elif asdf[0] <=0:
+                    pts[i][0] = 0
+                if asdf[1] >=h:
+                    pts[i][1] = h-1
+                elif asdf[1] <=0:
+                    pts[i][1] = 0
+
 
             blank_image3[:] = (0, 0, 0)
             blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(
@@ -272,7 +301,7 @@ def camShift():
         # cv2.imshow('blank', blank_image)
 
         k = cv2.waitKey(100) & 0xFF
-        
+
         if k == 27:
             break
 
@@ -281,7 +310,7 @@ def camShift():
             inputMode = True
             frame2 = frame.copy()
 
-            while inputMode or inputMode2 :
+            while inputMode or inputMode2:
                 cv2.imshow('frame', frame)
                 cv2.waitKey(0)
 
