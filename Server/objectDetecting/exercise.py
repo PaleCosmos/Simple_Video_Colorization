@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+import copy
 
 col, width, row, height = -1, -1, -1, -1
 frame = None
@@ -17,6 +18,12 @@ blank_image3 = None
 s = False
 h = None
 w = None
+clFlag = False
+poip = 0
+colorSum = [0,0,0]
+fcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = None
+
 
 colorDifferenceValue = 255
 colorDifferenceValues = [colorDifferenceValue,
@@ -26,8 +33,7 @@ boundaries = [
     ([0, 0, 0], [255, 255, 255])
 ]
 
-cvt2Colors = (255, 0, 0)
-
+cvt2Colors = (255, 0, 255)
 
 def calculate(a, b, c, x, y):
     return abs(a * x + b * y + c) / math.sqrt(a ** 2 + b ** 2)
@@ -38,11 +44,11 @@ def distance(a, b, c, d):
 
 
 def onMouse(event, x, y, flags, param):
-    global col, width, row, height, frame, frame2, inputMode, inputMode2, blank_image3, s, h, w
+    global clFlag, col, width, row, height, frame, frame2, inputMode, inputMode2, blank_image3, s, h, w
     global rectangle, roi_hist, trackWindow, colorDifferenceValue, upper, lower
-    #if event == cv2.EVENT_LBUTTONUP:
-        
-    if event == event == cv2.EVENT_LBUTTONDOWN:
+    global poip, colorSum
+ 
+    if event == cv2.EVENT_LBUTTONDOWN:
         print(trackWindow is not None)
     if inputMode:
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -67,31 +73,39 @@ def onMouse(event, x, y, flags, param):
             blank_image3 = np.zeros((h, w, 3), np.uint8)
             blank_image3[:] = (0, 0, 0)
             blank_image3[row:row + height, col:col + width] = (255, 255, 255)
-            print("색상을 선택해 주세요.")
+            print("색상 영역에서 드래그해주세여.")
             inputMode2 = True
             inputMode = False
 
     elif inputMode2:
-        if event == cv2.EVENT_LBUTTONUP:
-            #print(str(x) +":"+ str(y))
-            #krc = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            mgr = frame[y, x].copy()
+
+        if not clFlag and event == cv2.EVENT_LBUTTONDOWN:
+            clFlag = True
+            print('downevent')
+        if clFlag and event == cv2.EVENT_MOUSEMOVE:
+            poip = poip + 1
+            ku = frame[y,x].copy()
+            colorSum = [colorSum[0] + ku[0],colorSum[1] + ku[1],colorSum[2] + ku[2]]
+
+        if poip != 0 and event == cv2.EVENT_LBUTTONUP:
+            print('upevent')
+            clFlag = False
+
+            mgr = [colorSum[0]/poip,colorSum[1]/poip,colorSum[2]/poip]
 
             print('mgr: ' + str(mgr))
 
             sortedValue = sorted(
                 [0, 1, 2], key=lambda x: mgr[x], reverse=False)
 
-            colorContectValue = mgr[0] + mgr[1] + mgr[2] #math.sqrt(mgr[0]**2+mgr[1]**2+mgr[2]**2)
+            colorContectValue = mgr[0] + mgr[1] + mgr[2]
 
             print(sortedValue)
-            value = colorDifferenceValue/2
             los = []
             ups = []
 
             for k in sortedValue:
                 colorDifferenceValues[k] = mgr[k] *colorDifferenceValue / colorContectValue
-                #value = value*2
 
             for i in range(0, 3):
                 los.append(mgr[i] - colorDifferenceValues[i]
@@ -99,24 +113,19 @@ def onMouse(event, x, y, flags, param):
                 ups.append(mgr[i] + colorDifferenceValues[i]
                            if mgr[i] < 255-colorDifferenceValues[i] else 255)
 
-            #
-            # los = minColor
-            # ups = maxColor
-            #
-
             boundaries[0] = (los, ups)
             lower = np.array(los, dtype="uint8")
             upper = np.array(ups, dtype="uint8")
-            print(boundaries)
+
             s = True
             inputMode2 = False
-
     return
 
 
 def camShift():
     # grab references to the global variables
     global frame, frame2, inputMode, inputMode, trackWindow, roi_hist, roi, boundaries, blank_image3, s, h, w, upper, lower
+    global fcc, out
 
     try:
         # read video
@@ -124,6 +133,10 @@ def camShift():
         # set the size of screen
         cap.set(3, 480)
         cap.set(4, 320)
+        wx = int(cap.get(3))
+        hx = int(cap.get(4))
+        out = cv2.VideoWriter('output.mp4', fcc, 20, (wx, hx))
+
     except:
         print('Cam Failed')
         return
@@ -145,160 +158,73 @@ def camShift():
     upper = np.array(upper, dtype="uint8")
 
     while True:
-        # read decode frame
         ret, frame = cap.read()
         if not ret:
             break
 
-        # frame height, width
         h, w = frame.shape[:2]
 
         mask = cv2.inRange(frame, lower, upper)  # 색부분
         mask2 = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
-        #if s:
-        #mask2 = cv2.bitwise_and(blank_image3, mask2)
-
         resf = cv2.subtract(frame, mask2)
-        #cv2.imshow('resf', resf)
-        # set blue image
+
         blank_image = np.zeros((h, w, 3), np.uint8)
         blank_image[:] = cvt2Colors
 
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2HSV)
-        # set white image
         blank_image2 = np.zeros((h, w, 3), np.uint8)
         blank_image2[:] = (255, 255, 255)
 
-        #V_Equals = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # print(V_Equals.shape)
-
         ppap = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
-        #blank_image[:, :, 1] = ppap[:, :, 1]
         blank_image[:, :, 2] = ppap[:, :, 2]
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2BGR)
-        # print(blank_image.shape)
-
-        # set the color range
-
-        # in mask == mask, frame or bloack_image2 (set white)
+  
         trim1 = cv2.bitwise_or(frame, blank_image2, mask=mask)  # 몸통이하양
         if s:
             trim = cv2.bitwise_and(blank_image3, trim1)
-            # in mask == mask, frame or bloack_image (set color(blue))
-            trim2 = cv2.bitwise_and(trim, blank_image)  # 몸통이파랑
-            # frame and trim; background image(not object)
-            trim3 = cv2.bitwise_and(frame, trim)  # 3ㅇㅔ서 trim
-            # trim3 xor frame;
-            trim4 = cv2.bitwise_xor(trim3, frame)
-
-            #resf = cv2.subtract(frame, mask2)
-
             mask3 = cv2.bitwise_and(blank_image3, mask2)
             resf = cv2.subtract(frame, mask3)
             mask3 = cv2.cvtColor(mask3, cv2.COLOR_BGR2GRAY)
-
             frame2 = cv2.bitwise_or(resf, blank_image, mask=mask3)
             frame2 = cv2.bitwise_or(resf, frame2)
-            #print(boundaries)
-            #cv2.imshow('masks', mask)
 
         else:
-            # trim = cv2.bitwise_and(blank_image3, trim1)
-            # in mask == mask, frame or bloack_image (set color(blue))
-            trim2 = cv2.bitwise_and(trim1, blank_image)  # 몸통이파랑
-            # cv2.imshow("btrim2", trim2)
-            # frame and trim; background image(not object)
             trim3 = cv2.bitwise_and(frame, trim1)
-            # cv2.imshow("btrim3", trim3)
-            # trim3 xor frame;
-            trim4 = cv2.bitwise_xor(trim3, frame)
-            # cv2.imshow("btrim4", trim4)
-            #frameNot = cv2.bitwise_and(frame, cv2.cvtColor(trim2, cv2.COLOR_HSV2BGR))
             frame2 = cv2.bitwise_or(resf, blank_image, mask=mask)
             frame2 = cv2.bitwise_or(resf, frame2)
-
-        #frame2 = cv2.cvtColor(frame2, cv2.COLOR_HSV2BGR)
-
-        # frame = cv2.bitwise_xor(frame, trim2)
-
+            
         if trackWindow is not None:
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             dst = cv2.calcBackProject([hsv], [0], roi_hist, [0, 180], 1)
             ret, trackWindow = cv2.CamShift(dst, trackWindow, termination)
             pts = cv2.boxPoints(ret)
             pts = np.int0(pts)
+            copyPts = pts.copy()
+            #print(ret)
 
             for (i, asdf) in enumerate(pts):
                 if asdf[0] >=w:
-                    pts[i][0] =w-1
+                    copyPts[i][0] =w
                 elif asdf[0] <=0:
-                    pts[i][0] = 0
+                    copyPts[i][0] = 0
                 if asdf[1] >=h:
-                    pts[i][1] = h-1
+                    copyPts[i][1] = h
                 elif asdf[1] <=0:
-                    pts[i][1] = 0
-
+                    copyPts[i][1] = 0
 
             blank_image3[:] = (0, 0, 0)
-            blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(
-                pts[:, 0]):np.max(pts[:, 0])] = (255, 255, 255)
+            blank_image3[np.min(copyPts[:, 1]):np.max(copyPts[:, 1]), np.min(
+                copyPts[:, 0]):np.max(copyPts[:, 0])] = (255, 255, 255)
+            writeFrame = frame2.copy()
 
-            #for dot in pts[:]:
-            #    blank_image3[dot[1], dot[0]] = (255, 255, 255)
+            cv2.polylines(writeFrame, [copyPts], True, (0, 255, 0), 2)
 
-            # roi is white, other is black
-            # print(pts[:])
-
-            # print(pts[:, :])
-            # dist1 = distance(pts[0][0], pts[0][1], pts[1][0], pts[1][1])
-            # dist2 = distance(pts[0][0], pts[0][1], pts[2][0], pts[2][1])
-            # dist3 = distance(pts[0][0], pts[0][1], pts[3][0], pts[3][1])
-
-            # sumDist = dist1 + dist2 + dist3 - np.max([dist1, dist2, dist3])
-
-            # #print(sumDist)
-
-            # dots = []
-
-            # maxSizeX = np.max(pts[:, 0]) - np.min(pts[:, 0])
-            # maxSizeY = np.max(pts[:, 1]) - np.min(pts[:, 1])
-
-            # for i, d1 in enumerate(pts):
-            #     print('i is ', str(i), 'and pts is ', str(d1))
-            #     for j, d2 in enumerate(pts):
-            #         if i < j and not (abs(d1[0] - d2[0]) == maxSizeX or abs(d1[1] - d2[1]) == maxSizeY):
-            #             dots.append((
-            #                 d2[1] - d1[1],
-            #                 d1[0] - d2[0],
-            #                 (d1[1] * (d2[0] - d1[0]) - d1[0] * (d2[0] - d1[0]))
-            #             ))
-
-            # # dots = sorted(dots, key=lambda key: (-1 * key[0] / key[1]))
-            # #print(dots)
-
-            # for dot in blank_image3[np.min(pts[:, 1]):np.max(pts[:, 1]), np.min(pts[:, 0]):np.max(pts[:, 0])]:
-            #     mLen = 0.0
-            #     for v in dots:
-            #         print(v)
-            #         mLen += calculate(v[0], v[1], v[2], dot[0], dot[1])[0]
-            #     if mLen <= sumDist:
-            #         blank_image3[dot[0], dot[1]] = (255, 255, 255)
-
-            cv2.polylines(frame2, [pts], True, (0, 255, 0), 2)
-            #cv2.imshow("blank", blank_image)
-
-            # print(abc)
         if s:
-            cv2.imshow('frame', frame2)
+            cv2.imshow('frame', writeFrame)
+            out.write(frame2)
         else:
             cv2.imshow('frame', frame)
-
-        # cv2.imshow('frameN', frameNot)
-        # cv2.imshow('trim4', trim4)
-        # cv2.imshow('trim', trim1)
-        # cv2.imshow('b', trim4)
-        # cv2.imshow('blank', blank_image)
 
         k = cv2.waitKey(100) & 0xFF
 
@@ -308,15 +234,18 @@ def camShift():
         if k == ord('i'):
             print('추적한 영역을 지정하고 아무키나 누르세요')
             inputMode = True
-            frame2 = frame.copy()
+            frame2 = copy.copy(frame)
 
             while inputMode or inputMode2:
                 cv2.imshow('frame', frame)
                 cv2.waitKey(0)
+        if k == ord('q'):
+            print('종료되었습니다.')
+            out.release()
+            break
 
     cap.release()
     cv2.destroyAllWindows()
-
 
 # main
 if __name__ == '__main__':
