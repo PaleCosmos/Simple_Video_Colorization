@@ -1,5 +1,6 @@
 import cv2
 import sys
+from functions.onMouse import onMouse as onmouse
 
 colorDifferenceValue = 255
 colorDifferenceValues = [colorDifferenceValue,
@@ -14,10 +15,10 @@ cvt2Colors = (255, 0, 0)
 fcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = None
 
-tracker = cv2.TrackerMedianFlow_create()
+tracker = cv2.TrackerMIL_create()
 cvt2Colors = (255, 0, 0)
 
-video = cv2.VideoCapture('sample.mp4')
+video = cv2.VideoCapture('sampleVideo.mp4')
 
 if not video.isOpened():
     print("Could not open video")
