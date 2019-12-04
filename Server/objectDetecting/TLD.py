@@ -14,7 +14,7 @@ cvt2Colors = (255, 0, 0)
 fcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = None
 
-tracker = cv2.TrackerMedianFlow_create()
+tracker = cv2.TrackerBoosting_create()
 cvt2Colors = (255, 0, 0)
 
 video = cv2.VideoCapture('sample.mp4')
@@ -53,7 +53,7 @@ while True:
         p1 = (int(bbox[0]), int(bbox[1]))
         p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
         cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
-        print(bbox)
+        #print(bbox)
     else :
         # Tracking failure
         cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
