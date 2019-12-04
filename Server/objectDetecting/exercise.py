@@ -18,7 +18,7 @@ s = False
 h = None
 w = None
 
-colorDifferenceValue = 50
+colorDifferenceValue = 60
 colorDifferenceValues = [colorDifferenceValue,colorDifferenceValue,colorDifferenceValue]
 
 boundaries = [
@@ -38,7 +38,9 @@ def distance(a, b, c, d):
 def onMouse(event, x, y, flags, param):
     global col, width, row, height, frame, frame2, inputMode, inputMode2, blank_image3, s, h, w
     global rectangle, roi_hist, trackWindow, colorDifferenceValue, upper, lower
-
+    if event == cv2.EVENT_LBUTTONUP:
+        print(frame[y,x])
+        
     if inputMode:
         if event == cv2.EVENT_LBUTTONDOWN:
             rectangle = True
@@ -69,9 +71,9 @@ def onMouse(event, x, y, flags, param):
     elif inputMode2:
         if event == cv2.EVENT_LBUTTONUP:
             #print(str(x) +":"+ str(y))
-            gr = frame[x,y]
-            sortedValue = sorted([0,1,2], key = lambda x:gr[x], reverse=True)
-
+            gr = frame[y,x]
+            sortedValue = sorted([0,1,2], key = lambda x:gr[x], reverse=False)
+            print(sortedValue)
             value = colorDifferenceValue/2
             los =[]
             ups = []
