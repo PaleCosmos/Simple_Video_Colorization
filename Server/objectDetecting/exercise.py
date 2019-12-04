@@ -20,10 +20,9 @@ h = None
 w = None
 clFlag = False
 poip = 0
-colorSum = [0,0,0]
+colorSum = [0, 0, 0]
 fcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = None
-
 
 colorDifferenceValue = 255
 colorDifferenceValues = [colorDifferenceValue,
@@ -33,7 +32,8 @@ boundaries = [
     ([0, 0, 0], [255, 255, 255])
 ]
 
-cvt2Colors = (255, 0, 255)
+cvt2Colors = (255, 0, 0)
+
 
 def calculate(a, b, c, x, y):
     return abs(a * x + b * y + c) / math.sqrt(a ** 2 + b ** 2)
@@ -47,7 +47,7 @@ def onMouse(event, x, y, flags, param):
     global clFlag, col, width, row, height, frame, frame2, inputMode, inputMode2, blank_image3, s, h, w
     global rectangle, roi_hist, trackWindow, colorDifferenceValue, upper, lower
     global poip, colorSum
- 
+
     if event == cv2.EVENT_LBUTTONDOWN:
         print(trackWindow is not None)
     if inputMode:
@@ -78,20 +78,20 @@ def onMouse(event, x, y, flags, param):
             inputMode = False
 
     elif inputMode2:
-
         if not clFlag and event == cv2.EVENT_LBUTTONDOWN:
             clFlag = True
             print('downevent')
         if clFlag and event == cv2.EVENT_MOUSEMOVE:
             poip = poip + 1
-            ku = frame[y,x].copy()
-            colorSum = [colorSum[0] + ku[0],colorSum[1] + ku[1],colorSum[2] + ku[2]]
+            ku = frame[y, x].copy()
+            colorSum = [colorSum[0] + ku[0],
+                        colorSum[1] + ku[1], colorSum[2] + ku[2]]
 
         if poip != 0 and event == cv2.EVENT_LBUTTONUP:
             print('upevent')
             clFlag = False
 
-            mgr = [colorSum[0]/poip,colorSum[1]/poip,colorSum[2]/poip]
+            mgr = [colorSum[0]/poip, colorSum[1]/poip, colorSum[2]/poip]
 
             print('mgr: ' + str(mgr))
 
@@ -105,7 +105,8 @@ def onMouse(event, x, y, flags, param):
             ups = []
 
             for k in sortedValue:
-                colorDifferenceValues[k] = mgr[k] *colorDifferenceValue / colorContectValue
+                colorDifferenceValues[k] = mgr[k] * \
+                    colorDifferenceValue / colorContectValue
 
             for i in range(0, 3):
                 los.append(mgr[i] - colorDifferenceValues[i]
@@ -179,10 +180,8 @@ def camShift():
         ppap = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
         blank_image[:, :, 2] = ppap[:, :, 2]
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2BGR)
-  
-        trim1 = cv2.bitwise_or(frame, blank_image2, mask=mask)  # 몸통이하양
+
         if s:
-            trim = cv2.bitwise_and(blank_image3, trim1)
             mask3 = cv2.bitwise_and(blank_image3, mask2)
             resf = cv2.subtract(frame, mask3)
             mask3 = cv2.cvtColor(mask3, cv2.COLOR_BGR2GRAY)
@@ -190,10 +189,9 @@ def camShift():
             frame2 = cv2.bitwise_or(resf, frame2)
 
         else:
-            trim3 = cv2.bitwise_and(frame, trim1)
             frame2 = cv2.bitwise_or(resf, blank_image, mask=mask)
             frame2 = cv2.bitwise_or(resf, frame2)
-            
+
         if trackWindow is not None:
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             dst = cv2.calcBackProject([hsv], [0], roi_hist, [0, 180], 1)
@@ -201,16 +199,43 @@ def camShift():
             pts = cv2.boxPoints(ret)
             pts = np.int0(pts)
             copyPts = pts.copy()
+
+            center = [0, 0]
+
+            for gp in copyPts:
+                center[0] = center[0] + gp[0]
+                center[1] = center[1] + gp[1]
+
+            center[0] = center[0]/4
+            center[1] = center[1]/4
+        
+            diff = 0
+
+            for b in copyPts:
+                dif_ = (b[0] - center[0])**2 + (b[1] - center[1])**2
+                if(dif_ > diff):
+                    diff = dif_
+
+            diff = math.sqrt(diff)/math.sqrt(2)
+            print(diff)
+            copyPts[0][0] = center[0] + diff
+            copyPts[0][1] = center[1] + diff
+            copyPts[1][0] = center[0] + diff
+            copyPts[1][1] = center[1] - diff
+            copyPts[2][0] = center[0] - diff
+            copyPts[2][1] = center[1] - diff
+            copyPts[3][0] = center[0] - diff
+            copyPts[3][1] = center[1] + diff
             #print(ret)
 
             for (i, asdf) in enumerate(pts):
-                if asdf[0] >=w:
-                    copyPts[i][0] =w
-                elif asdf[0] <=0:
+                if asdf[0] >= w:
+                    copyPts[i][0] = w
+                elif asdf[0] <= 0:
                     copyPts[i][0] = 0
-                if asdf[1] >=h:
+                if asdf[1] >= h:
                     copyPts[i][1] = h
-                elif asdf[1] <=0:
+                elif asdf[1] <= 0:
                     copyPts[i][1] = 0
 
             blank_image3[:] = (0, 0, 0)
@@ -246,6 +271,7 @@ def camShift():
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 # main
 if __name__ == '__main__':
