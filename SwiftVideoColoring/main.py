@@ -21,9 +21,9 @@ def getColor():
     
 # closing 이벤트
 def on_closing():
-    global inputMode2, main, s, myTrackerType, spinbox
+    global inputMode2, main, s, myTrackerType, variable
     # 마우스 이벤트 종료, trackwindow가 None이 아니므로 추적 및 Coloring 시작
-    myTrackerType = spinbox.get()
+    myTrackerType = variable.get()
     s = True
     inputMode2=False
     main.destroy()
@@ -51,10 +51,10 @@ fcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = None
 tracker_initation = True
 main = None
-spinbox = None
+variable = None
 
 # opencv에서 제공해주는 알고리즘이 있었음
-tracker_types = ('BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'CSRT', 'MOSSE')
+tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'CSRT', 'MOSSE']
 myTrackerType = 'BOOSTING'
 
 # 이거에 따라 정확도 달라지게 알고리즘 짰음
@@ -360,7 +360,7 @@ def start():
             cv2.imshow('frame', frame)
 
         # 키 이벤트를 대기
-        k = cv2.waitKey(100) & 0xFF
+        k = cv2.waitKey(10) & 0xFF
 
         if k == 27:
             break
@@ -399,11 +399,15 @@ if __name__ == '__main__':
     main.protocol("WM_DELETE_WINDOW", on_closing)
     main.geometry('200x200')
 
-    # spinBox
-    spinbox = Spinbox(main, text = "tracker", state = 'readonly', values=tracker_types, textvariable = StringVar())
-    spinbox.pack()
-
+    # 옵션 메뉴에 들어갈 values
     variable = StringVar(main)
+    variable.set(tracker_types[0])
+
+    # 옵션 메뉴
+    opt = OptionMenu(main, variable, *tracker_types)
+    opt.config(width = 90, font=("Helvetica", 12))
+    opt.pack()
+
     # colorPicker를 호출하기 위한 버튼
     Button(main, text = "color", command=getColor).pack()
 
