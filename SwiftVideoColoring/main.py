@@ -21,13 +21,13 @@ def getColor():
     
 # closing 이벤트
 def on_closing():
-    global inputMode2, main, s
-
+    global inputMode2, main, s, myTrackerType, spinbox
     # 마우스 이벤트 종료, trackwindow가 None이 아니므로 추적 및 Coloring 시작
+    myTrackerType = spinbox.get()
     s = True
     inputMode2=False
     main.destroy()
-    
+
 # 데이터들
 col, width, row, height = -1, -1, -1, -1
 frame = None
@@ -51,10 +51,11 @@ fcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = None
 tracker_initation = True
 main = None
+spinbox = None
 
 # opencv에서 제공해주는 알고리즘이 있었음
-tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'CSRT', 'MOSSE']
-tracker = tracker_create(tracker_types[2])
+tracker_types = ('BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'CSRT', 'MOSSE')
+myTrackerType = 'BOOSTING'
 
 # 이거에 따라 정확도 달라지게 알고리즘 짰음
 colorDifferenceValue = 255
@@ -170,6 +171,7 @@ def onMouse(event, x, y, flags, param):
             lower = np.array(los, dtype="uint8")
             upper = np.array(ups, dtype="uint8")
 
+            main.eval('tk::PlaceWindow %s center' % main.winfo_pathname(main.winfo_id()))
             # color picker 띄워줌
             main.mainloop()
 
@@ -178,7 +180,7 @@ def onMouse(event, x, y, flags, param):
 # 시작
 def start():
     global frame, frame2, inputMode, inputMode, trackWindow, roi_hist, roi, boundaries, blank_image3, s, h, w, upper, lower
-    global fcc, out, tracker_initation
+    global fcc, out, tracker_initation, myTrackerType
 
     try:
         # 비디오 가져옴
@@ -268,6 +270,7 @@ def start():
 
             # 최초로 진입했다면 tracker가 추적하기 위한 boundary 박스를 전달
             if tracker_initation:
+                tracker = tracker_create(myTrackerType)
                 ret =tracker.init(frame2, trackWindow)
                 tracker_initation = False
             
@@ -338,6 +341,7 @@ def start():
             
             # 이 프레임은 출력용 프레임으로 저장용 프레임에 바운딩 박스를 적용시키지 않기 위해서 미리 얕은 복사를 진행
             writeFrame = frame2.copy()
+            cv2.putText(writeFrame, myTrackerType, (0,50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255,0,0), 2)
 
             # 박스로 객체를 추적하는것을 보여주기 위함
             cv2.polylines(writeFrame, [copyPts], True, (0, 255, 0), 2)
@@ -393,14 +397,18 @@ if __name__ == '__main__':
     main = Tk()
     main.title('SVC')
     main.protocol("WM_DELETE_WINDOW", on_closing)
+    main.geometry('200x200')
+
+    # spinBox
+    spinbox = Spinbox(main, text = "tracker", state = 'readonly', values=tracker_types, textvariable = StringVar())
+    spinbox.pack()
+
+    variable = StringVar(main)
+    # colorPicker를 호출하기 위한 버튼
+    Button(main, text = "color", command=getColor).pack()
 
     # 적용 버튼
-    label = Button(main, text = "적용", command=on_closing)
-    label.grid(row =1, column = 0)
-
-    # colorPicker를 호출하기 위한 버튼
-    btn0 = Button(main, text = "color", command=getColor)
-    btn0.grid(row =0, column = 0)
+    Button(main, text = "적용", command=on_closing).pack()
 
     # 시작
     start()
