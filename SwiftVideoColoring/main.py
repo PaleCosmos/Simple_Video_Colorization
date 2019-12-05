@@ -3,7 +3,31 @@ import cv2
 import math
 import copy
 from data.trackers import tracker_create
+from tkinter import *
+from tkinter.colorchooser import *
+import sys
 
+
+# 나가기 버튼
+def ExitButton():
+    global main
+    main.quit()
+
+# 색 가져옴
+def getColor():
+    global cvt2Colors
+    temp = askcolor()[0]
+    cvt2Colors = np.array([temp[2], temp[1], temp[0]])
+    
+# closing 이벤트
+def on_closing():
+    global inputMode2, main, s
+
+    # 마우스 이벤트 종료, trackwindow가 None이 아니므로 추적 및 Coloring 시작
+    s = True
+    inputMode2=False
+    main.destroy()
+    
 # 데이터들
 col, width, row, height = -1, -1, -1, -1
 frame = None
@@ -26,10 +50,11 @@ colorSum = [0, 0, 0]
 fcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = None
 tracker_initation = True
+main = None
 
 # opencv에서 제공해주는 알고리즘이 있었음
 tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'CSRT', 'MOSSE']
-tracker = tracker_create(tracker_types[1])
+tracker = tracker_create(tracker_types[2])
 
 # 이거에 따라 정확도 달라지게 알고리즘 짰음
 colorDifferenceValue = 255
@@ -51,33 +76,41 @@ def onMouse(event, x, y, flags, param):
     global rectangle, roi_hist, trackWindow, colorDifferenceValue, upper, lower
     global poip, colorSum
 
-    # 박스 지정하는곳
+    # 출력용
     if event == cv2.EVENT_LBUTTONDOWN:
         print(trackWindow is not None)
+
+    # boundary 박스 지정
     if inputMode:
+
+        # 박스 지정 시작
         if event == cv2.EVENT_LBUTTONDOWN:
             rectangle = True
             col, row = x, y
 
+        # 박스 크기 확장
         elif event == cv2.EVENT_MOUSEMOVE:
             if rectangle:
                 frame = frame2.copy()
                 cv2.rectangle(frame, (col, row), (x, y), (255, 255, 255), 2)
                 cv2.imshow('frame', frame)
 
+        # 박스 확정
         elif event == cv2.EVENT_LBUTTONUP:
             rectangle = False
             cv2.rectangle(frame, (col, row), (x, y), (255, 255, 255), 2)
             height, width = abs(row - y), abs(col - x)
             trackWindow = (col, row, width, height)
+
             roi = frame[row:row + height, col:col + width]
             roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+
             roi_hist = cv2.calcHist([roi], [0], None, [180], [0, 180])
             cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
+
             blank_image3 = np.zeros((h, w, 3), np.uint8)
             blank_image3[:] = (0, 0, 0)
             blank_image3[row:row + height, col:col + width] = (255, 255, 255)
-            print(trackWindow)
 
             print("색상 영역에서 드래그해주세여.")
             inputMode2 = True
@@ -85,9 +118,13 @@ def onMouse(event, x, y, flags, param):
 
     # 박스 지정이 끝나면 색상을 문질문질
     elif inputMode2:
+        
+        # 색상 지정 시작
         if not clFlag and event == cv2.EVENT_LBUTTONDOWN:
             clFlag = True
             print('downevent')
+
+        # 색상 문질문질
         if clFlag and event == cv2.EVENT_MOUSEMOVE:
             poip = poip + 1
             ku = frame[y, x].copy()
@@ -95,6 +132,7 @@ def onMouse(event, x, y, flags, param):
             colorSum = [colorSum[0] + ku[0],
                         colorSum[1] + ku[1], colorSum[2] + ku[2]]
 
+        # 색상 설정 마무리
         if poip != 0 and event == cv2.EVENT_LBUTTONUP:
             print('upevent')
             clFlag = False
@@ -107,6 +145,7 @@ def onMouse(event, x, y, flags, param):
             sortedValue = sorted(
                 [0, 1, 2], key=lambda x: mgr[x], reverse=False)
 
+            # color 값을 세 색의 합으로 나누어주기 위해서 선언
             colorContectValue = mgr[0] + mgr[1] + mgr[2]
 
             print(sortedValue)
@@ -131,9 +170,9 @@ def onMouse(event, x, y, flags, param):
             lower = np.array(los, dtype="uint8")
             upper = np.array(ups, dtype="uint8")
 
-            # 마우스 이벤트 종료, trackwindow가 None이 아니므로 추적 및 Coloring 시작
-            s = True
-            inputMode2 = False
+            # color picker 띄워줌
+            main.mainloop()
+
     return
 
 # 시작
@@ -264,6 +303,7 @@ def start():
         
             diff = 0
 
+            # 가장 큰 값을 구함
             for b in copyPts:
                 dif_ = (b[0] - center[0])**2 + (b[1] - center[1])**2
                 if(dif_ > diff):
@@ -349,4 +389,18 @@ def start():
 
 # 시작
 if __name__ == '__main__':
+    # GUI 데이터
+    main = Tk()
+    main.title('SVC')
+    main.protocol("WM_DELETE_WINDOW", on_closing)
+
+    # 적용 버튼
+    label = Button(main, text = "적용", command=on_closing)
+    label.grid(row =1, column = 0)
+
+    # colorPicker를 호출하기 위한 버튼
+    btn0 = Button(main, text = "color", command=getColor)
+    btn0.grid(row =0, column = 0)
+
+    # 시작
     start()
