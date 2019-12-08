@@ -54,8 +54,8 @@ main = None
 variable = None
 
 # opencv에서 제공해주는 알고리즘이 있었음
-tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'CSRT', 'MOSSE']
-myTrackerType = 'BOOSTING'
+tracker_types = ['MEDIANFLOW','BOOSTING', 'MIL','KCF', 'TLD', 'CSRT', 'MOSSE']
+myTrackerType = 'MEDIANFLOW'
 
 # 이거에 따라 정확도 달라지게 알고리즘 짰음
 colorDifferenceValue = 255
@@ -222,12 +222,17 @@ def start():
         # 초기 값은 0,0,0 부터 255,255,255 이므로 현재 마스크는 의미가 없지만,
         # 마우스 이벤트에서 색상을 입력받은 후 부터는 의미를 가지게됨
         mask = cv2.inRange(frame, lower, upper) 
-        
+        cv2.imshow('mask', mask)
+
         # subtract 메서드 사용을 위해 BGR포멧으로 변경해줌
         # 왠진 모름 오류가 나더라
         mask2 = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
+        
+
         resf = cv2.subtract(frame, mask2)
+
+        cv2.imshow('resf', resf)
 
         # 바꾸고자 하는 색상을 가진 video와 같은 크기의 이미지
         blank_image = np.zeros((h, w, 3), np.uint8)
@@ -245,6 +250,8 @@ def start():
         blank_image[:, :, 2] = ppap[:, :, 2]
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2BGR)
 
+        cv2.imshow('blankimage', blank_image)
+
         # 마우스 이벤트 후
         if s:
             # 비트 연산을 통해 색상 추출 및 색상 변경
@@ -257,6 +264,7 @@ def start():
             
             # 최종 결과 이미지
             frame2 = cv2.bitwise_or(resf, frame2)
+            cv2.imshow('mask3', mask3)
 
         # 마우스 이벤트 전
         else:
