@@ -26,7 +26,8 @@ def on_closing():
     myTrackerType = variable.get()
     s = True
     inputMode2=False
-    main.destroy()
+    #main.destroy()
+
 
 # 데이터들
 col, width, row, height = -1, -1, -1, -1
@@ -161,9 +162,9 @@ def onMouse(event, x, y, flags, param):
 
             # 가중치를 고려하여 0 - 255 사이의 값으로 나타내기
             for i in range(0, 3):
-                los.append(mgr[i] - colorDifferenceValues[i]
+                los.append((mgr[i] - colorDifferenceValues[i])
                            if mgr[i] > colorDifferenceValues[i] else 0)
-                ups.append(mgr[i] + colorDifferenceValues[i]
+                ups.append((mgr[i] + colorDifferenceValues[i])
                            if mgr[i] < 255-colorDifferenceValues[i] else 255)
 
             # 색상의 경계 설정 완료
@@ -184,7 +185,7 @@ def start():
 
     try:
         # 비디오 가져옴
-        cap = cv2.VideoCapture('video/sampleVideo.mp4')
+        cap = cv2.VideoCapture('video/real.mp4')
         # 크기설정
         cap.set(3, 480)
         cap.set(4, 320)
@@ -222,7 +223,7 @@ def start():
         # 초기 값은 0,0,0 부터 255,255,255 이므로 현재 마스크는 의미가 없지만,
         # 마우스 이벤트에서 색상을 입력받은 후 부터는 의미를 가지게됨
         mask = cv2.inRange(frame, lower, upper) 
-        cv2.imshow('mask', mask)
+        #cv2.imshow('mask', mask)
 
         # subtract 메서드 사용을 위해 BGR포멧으로 변경해줌
         # 왠진 모름 오류가 나더라
@@ -232,7 +233,7 @@ def start():
 
         resf = cv2.subtract(frame, mask2)
 
-        cv2.imshow('resf', resf)
+        #cv2.imshow('resf', resf)
 
         # 바꾸고자 하는 색상을 가진 video와 같은 크기의 이미지
         blank_image = np.zeros((h, w, 3), np.uint8)
@@ -250,13 +251,14 @@ def start():
         blank_image[:, :, 2] = ppap[:, :, 2]
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2BGR)
 
-        cv2.imshow('blankimage', blank_image)
+        #cv2.imshow('blankimage', blank_image)
 
         # 마우스 이벤트 후
         if s:
             # 비트 연산을 통해 색상 추출 및 색상 변경
             mask3 = cv2.bitwise_and(blank_image3, mask2)
             resf = cv2.subtract(frame, mask3)
+            
 
             # mask로 사용하기 위해 다시 GRAY포맷으로 변경
             mask3 = cv2.cvtColor(mask3, cv2.COLOR_BGR2GRAY)
@@ -335,11 +337,11 @@ def start():
             # boundary 박스가 화면 밖으로 나가는 것을 막기 위해 만듬
             for (i, asdf) in enumerate(pts):
                 if asdf[0] >= w:
-                    copyPts[i][0] = w
+                    copyPts[i][0] = w-1
                 elif asdf[0] <= 0:
                     copyPts[i][0] = 0
                 if asdf[1] >= h:
-                    copyPts[i][1] = h
+                    copyPts[i][1] = h-1
                 elif asdf[1] <= 0:
                     copyPts[i][1] = 0
 
@@ -368,7 +370,7 @@ def start():
             cv2.imshow('frame', frame)
 
         # 키 이벤트를 대기
-        k = cv2.waitKey(10) & 0xFF
+        k = cv2.waitKey(1) & 0xFF
 
         if k == 27:
             break
@@ -404,7 +406,7 @@ if __name__ == '__main__':
     # GUI 데이터
     main = Tk()
     main.title('SVC')
-    main.protocol("WM_DELETE_WINDOW", on_closing)
+    #main.protocol("WM_DELETE_WINDOW", on_closing)
     main.geometry('200x200')
 
     # 옵션 메뉴에 들어갈 values
@@ -420,7 +422,7 @@ if __name__ == '__main__':
     Button(main, text = "color", command=getColor).pack()
 
     # 적용 버튼
-    Button(main, text = "적용", command=on_closing).pack()
+    Button(main, text = "apply", command=on_closing).pack()
 
     # 시작
     start()
