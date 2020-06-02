@@ -14,18 +14,22 @@ def ExitButton():
     main.quit()
 
 # 색 가져옴
+
+
 def getColor():
     global cvt2Colors
     temp = askcolor()[0]
     cvt2Colors = np.array([temp[2], temp[1], temp[0]])
-    
+
 # closing 이벤트
+
+
 def on_closing():
     global inputMode2, main, s, myTrackerType, variable
     # 마우스 이벤트 종료, trackwindow가 None이 아니므로 추적 및 Coloring 시작
     myTrackerType = variable.get()
     s = True
-    inputMode2=False
+    inputMode2 = False
     #main.destroy()
 
 
@@ -55,7 +59,8 @@ main = None
 variable = None
 
 # opencv에서 제공해주는 알고리즘이 있었음
-tracker_types = ['MEDIANFLOW','BOOSTING', 'MIL','KCF', 'TLD', 'CSRT', 'MOSSE']
+tracker_types = ['MEDIANFLOW', 'BOOSTING',
+                 'MIL', 'KCF', 'TLD', 'CSRT', 'MOSSE']
 myTrackerType = 'MEDIANFLOW'
 
 # 이거에 따라 정확도 달라지게 알고리즘 짰음
@@ -73,6 +78,8 @@ cvt2Colors = (255, 0, 0)
 
 # 박스를 지정하고 바꾸고자 하는 색상을 문질문질하면
 # 색상의 평균값을 구해서 알고리즘에 대입함
+
+
 def onMouse(event, x, y, flags, param):
     global clFlag, col, width, row, height, frame, frame2, inputMode, inputMode2, blank_image3, s, h, w
     global rectangle, roi_hist, trackWindow, colorDifferenceValue, upper, lower
@@ -120,7 +127,7 @@ def onMouse(event, x, y, flags, param):
 
     # 박스 지정이 끝나면 색상을 문질문질
     elif inputMode2:
-        
+
         # 색상 지정 시작
         if not clFlag and event == cv2.EVENT_LBUTTONDOWN:
             clFlag = True
@@ -172,13 +179,16 @@ def onMouse(event, x, y, flags, param):
             lower = np.array(los, dtype="uint8")
             upper = np.array(ups, dtype="uint8")
 
-            main.eval('tk::PlaceWindow %s center' % main.winfo_pathname(main.winfo_id()))
+            main.eval('tk::PlaceWindow %s center' %
+                      main.winfo_pathname(main.winfo_id()))
             # color picker 띄워줌
             main.mainloop()
 
     return
 
 # 시작
+
+
 def start():
     global frame, frame2, inputMode, inputMode, trackWindow, roi_hist, roi, boundaries, blank_image3, s, h, w, upper, lower
     global fcc, out, tracker_initation, myTrackerType
@@ -222,14 +232,12 @@ def start():
 
         # 초기 값은 0,0,0 부터 255,255,255 이므로 현재 마스크는 의미가 없지만,
         # 마우스 이벤트에서 색상을 입력받은 후 부터는 의미를 가지게됨
-        mask = cv2.inRange(frame, lower, upper) 
+        mask = cv2.inRange(frame, lower, upper)
         #cv2.imshow('mask', mask)
 
         # subtract 메서드 사용을 위해 BGR포멧으로 변경해줌
         # 왠진 모름 오류가 나더라
         mask2 = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-
-        
 
         resf = cv2.subtract(frame, mask2)
 
@@ -241,7 +249,7 @@ def start():
 
         # 색상 변경을 위해 HSV포맷으로 변경
         blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2HSV)
-        
+
         # 이건 검은 이미지가 필요해서 만듬
         blank_image2 = np.zeros((h, w, 3), np.uint8)
         blank_image2[:] = (255, 255, 255)
@@ -258,12 +266,11 @@ def start():
             # 비트 연산을 통해 색상 추출 및 색상 변경
             mask3 = cv2.bitwise_and(blank_image3, mask2)
             resf = cv2.subtract(frame, mask3)
-            
 
             # mask로 사용하기 위해 다시 GRAY포맷으로 변경
             mask3 = cv2.cvtColor(mask3, cv2.COLOR_BGR2GRAY)
             frame2 = cv2.bitwise_or(resf, blank_image, mask=mask3)
-            
+
             # 최종 결과 이미지
             frame2 = cv2.bitwise_or(resf, frame2)
             cv2.imshow('mask3', mask3)
@@ -271,7 +278,7 @@ def start():
         # 마우스 이벤트 전
         else:
             # 컨버팅 과정을 보고싶어서 넣어놓은것
-            # 마우스 이벤트 전에는 어차피 frame2가 아닌 frame을 출력하기 때문에 무의미하다. 
+            # 마우스 이벤트 전에는 어차피 frame2가 아닌 frame을 출력하기 때문에 무의미하다.
             frame2 = cv2.bitwise_or(resf, blank_image, mask=mask)
             frame2 = cv2.bitwise_or(resf, frame2)
 
@@ -281,13 +288,13 @@ def start():
             # 최초로 진입했다면 tracker가 추적하기 위한 boundary 박스를 전달
             if tracker_initation:
                 tracker = tracker_create(myTrackerType)
-                ret =tracker.init(frame2, trackWindow)
+                ret = tracker.init(frame2, trackWindow)
                 tracker_initation = False
-            
+
             # boundary 박스를 따라서 추적을 진행
             else:
                 ret, trackWindow = tracker.update(frame)
-            
+
             # 변수명이 너무 길어서 만든거
             a = trackWindow
 
@@ -295,8 +302,8 @@ def start():
             pts = [
                 [a[0], a[1]],
                 [a[0] + a[2], a[1]],
-                [a[0]+a[2], a[1]+a[3]],
-                [a[0], a[1]+a[3]]]
+                [a[0] + a[2], a[1] + a[3]],
+                [a[0], a[1] + a[3]]]
             pts = np.int0(pts)
             copyPts = pts.copy()
 
@@ -304,7 +311,7 @@ def start():
             #print(copyPts)
 
             # tracking 알고리즘 찾아보기 전에
-            # 약간이나마 tracking을 최적화 시키기 위해 중심좌표를 계산하여 가장 거리가 먼 
+            # 약간이나마 tracking을 최적화 시키기 위해 중심좌표를 계산하여 가장 거리가 먼
             # 좌표를 한 점으로 가지는 정사각형으로 boundary 를 변환해주는 과정
             # 근데 이제 다른 알고리즘 찾아서 쓸모가 없다
             for gp in copyPts:
@@ -313,7 +320,7 @@ def start():
 
             center[0] = center[0]/4
             center[1] = center[1]/4
-        
+
             diff = 0
 
             # 가장 큰 값을 구함
@@ -348,10 +355,11 @@ def start():
             blank_image3[:] = (0, 0, 0)
             blank_image3[np.min(copyPts[:, 1]):np.max(copyPts[:, 1]), np.min(
                 copyPts[:, 0]):np.max(copyPts[:, 0])] = (255, 255, 255)
-            
+
             # 이 프레임은 출력용 프레임으로 저장용 프레임에 바운딩 박스를 적용시키지 않기 위해서 미리 얕은 복사를 진행
             writeFrame = frame2.copy()
-            cv2.putText(writeFrame, myTrackerType, (0,50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255,0,0), 2)
+            cv2.putText(writeFrame, myTrackerType, (0, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 2)
 
             # 박스로 객체를 추적하는것을 보여주기 위함
             cv2.polylines(writeFrame, [copyPts], True, (0, 255, 0), 2)
@@ -415,14 +423,14 @@ if __name__ == '__main__':
 
     # 옵션 메뉴
     opt = OptionMenu(main, variable, *tracker_types)
-    opt.config(width = 90, font=("Helvetica", 12))
+    opt.config(width=90, font=("Helvetica", 12))
     opt.pack()
 
     # colorPicker를 호출하기 위한 버튼
-    Button(main, text = "color", command=getColor).pack()
+    Button(main, text="color", command=getColor).pack()
 
     # 적용 버튼
-    Button(main, text = "apply", command=on_closing).pack()
+    Button(main, text="apply", command=on_closing).pack()
 
     # 시작
     start()
