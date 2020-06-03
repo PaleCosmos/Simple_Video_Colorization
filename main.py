@@ -189,13 +189,13 @@ def onMouse(event, x, y, flags, param):
 # 시작
 
 
-def start():
+def start(inputPath, outputPath):
     global frame, frame2, inputMode, inputMode, trackWindow, roi_hist, roi, boundaries, blank_image3, s, h, w, upper, lower
     global fcc, out, tracker_initation, myTrackerType
 
     try:
         # 비디오 가져옴
-        cap = cv2.VideoCapture('video/real.mp4')
+        cap = cv2.VideoCapture(inputPath)
         # 크기설정
         cap.set(3, 480)
         cap.set(4, 320)
@@ -203,7 +203,7 @@ def start():
         hx = int(cap.get(4))
 
         # output 출력을 위한 VideoWriter 초기화
-        out = cv2.VideoWriter('output.mp4', fcc, 20, (wx, hx))
+        out = cv2.VideoWriter(outputPath, fcc, 20, (wx, hx))
 
     except:
         print('Cam Failed')
@@ -432,5 +432,15 @@ if __name__ == '__main__':
     # 적용 버튼
     Button(main, text="apply", command=on_closing).pack()
 
+    # 커맨드라인 알규먼트
+    arguments = sys.argv
+
+    a1 = 'input.mp4'
+    a2 = 'output.mp4'
+
+    if len(arguments) > 1:
+        a1 = arguments[1]
+    if len(arguments)> 2:
+        a2 = arguments[2]
     # 시작
-    start()
+    start(a1, a2)
