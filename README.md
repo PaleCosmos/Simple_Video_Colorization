@@ -2,7 +2,7 @@
 Graduation Work
 
 ## Wiki Page 
-[https://github.com/PaleCosmos/Simple_Video_Colorization/wiki/0.Home](https://github.com/PaleCosmos/Simple_Video_Colorization/wiki/0.Home)
+[https://github.com/PaleCosmos/Simple_Video_Colorization/wiki/0.Home](https://github.com/PaleCosmos/Simple_Video_Colorization/wiki/Home)
 
 ## Team members
 
